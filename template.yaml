@@ -5,57 +5,73 @@ Description: >
 
   Sample SAM Template for rust-lightning-node-rankings
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 3
     MemorySize: 128
-
+    Runtime: provided.al2023
 
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Metadata:
-      BuildMethod: rust-cargolambda # More info about Cargo Lambda: https://github.com/cargo-lambda/cargo-lambda
+##########################################################################
+#                              Dynamo Table                              #
+########################################################################## 
+  Table:
+    Type: AWS::DynamoDB::Table
     Properties:
-      CodeUri: ./backend/hello_world   # Points to dir of Cargo.toml
-      Handler: bootstrap    # Do not change, as this is the default executable name produced by Cargo Lambda
-      Runtime: provided.al2023
-      Architectures:
-        - x86_64
-      Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
-          Properties:
-            Path: /hello
-            Method: get
-  GoodbyeWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    Metadata:
-      BuildMethod: rust-cargolambda # More info about Cargo Lambda: https://github.com/cargo-lambda/cargo-lambda
+      TableName: NodesRankingTable
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+
+  ApiGateway:
+    Type: AWS::Serverless::Api
     Properties:
-      CodeUri: ./backend/goodbye_world   # Points to dir of Cargo.toml
-      Handler: bootstrap    # Do not change, as this is the default executable name produced by Cargo Lambda
-      Runtime: provided.al2023
-      Architectures:
-        - x86_64
+      StageName: dev
+
+  FetchNodesFunction:
+    Type: AWS::Serverless::Function 
+    Metadata:
+      EntryPoint: fetch_nodes
+      BuildMethod: rust-cargolambda 
+    Properties:  
+      Handler: bootstrap
+      CodeUri: backend/fetch_nodes
       Events:
-        HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+        GetNodes:
+          Type: Api 
           Properties:
-            Path: /goodbye
+            Path: /nodes
             Method: get
+            RestApiId: !Ref ApiGateway
+
+  SchedulerFunction:
+    Type: AWS::Serverless::Function 
+    Metadata:
+      BuildMethod: rust-cargolambda 
+    Properties:
+      Handler: bootstrap   
+      CodeUri: backend/scheduler
+      Events:
+        ScheduledEvent:
+            Type: Schedule
+            Properties:
+              Schedule: rate(30 minutes)
+      Policies: 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref Table
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  Api:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/dev/"
