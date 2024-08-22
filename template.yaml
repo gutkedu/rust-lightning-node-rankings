@@ -65,7 +65,7 @@ Resources:
             Properties:
               Schedule: rate(30 minutes)
       Policies: 
-        - DynamoDBCrudPolicy:
+        - DynamoDBWritePolicy:
             TableName: !Ref Table
 
 Outputs:
