@@ -1,11 +1,10 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, NaiveDateTime, Utc};
-
-// ...
+use chrono::{DateTime, Utc};
 
 use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 
+use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use ureq::Agent;
 
@@ -26,11 +25,14 @@ struct Node {
 #[derive(Deserialize)]
 struct Request {}
 
+lazy_static! {
+    static ref HTTP_AGENT: Agent = Agent::new();
+}
+
 async fn function_handler(_event: LambdaEvent<Request>) -> Result<(), Error> {
     // Fetch the data from the API
-    let agent = Agent::new();
     let url = "https://mempool.space/api/v1/lightning/nodes/rankings/connectivity";
-    let response = agent.get(url).call()?;
+    let response = HTTP_AGENT.get(url).call()?;
     let res: Vec<Node> = serde_json::from_str(&response.into_string()?)?;
 
     // Initialize the DynamoDB client
@@ -52,11 +54,24 @@ async fn function_handler(_event: LambdaEvent<Request>) -> Result<(), Error> {
         // Convert capacity from satoshis to bitcoins
         let capacity_btc = node.capacity as f64 / 100_000_000.0;
 
+        // Create an item for the table
         let item = HashMap::from([
-            ("pk".to_string(), AttributeValue::S("NODE".to_string())),
+            ("PK".to_string(), AttributeValue::S("NODE".to_string())),
             (
-                "sk".to_string(),
+                "SK".to_string(),
                 AttributeValue::S(format!("PUBLIC_KEY#{}", node.publicKey)),
+            ),
+            (
+                "LSI1".to_string(),
+                AttributeValue::N(node.channels.to_string()),
+            ),
+            (
+                "channels".to_string(),
+                AttributeValue::N(node.channels.to_string()),
+            ),
+            (
+                "updated_at".to_string(),
+                AttributeValue::N(node.updatedAt.to_string()),
             ),
             (
                 "public_key".to_string(),
@@ -71,12 +86,12 @@ async fn function_handler(_event: LambdaEvent<Request>) -> Result<(), Error> {
         ]);
 
         // Put the item into the table
-        let put_request = client
+        client
             .put_item()
             .table_name(TABLE_NAME)
-            .set_item(Some(item));
-        let put_response = put_request.send().await?;
-        println!("Put Item Response: {:?}", put_response);
+            .set_item(Some(item))
+            .send()
+            .await?;
     }
     Ok(())
 }

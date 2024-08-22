@@ -8,7 +8,7 @@ Description: >
 Globals:
   Function:
     Timeout: 3
-    MemorySize: 128
+    MemorySize: 512
     Runtime: provided.al2023
 
 Resources:
@@ -19,18 +19,29 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: NodesRankingTable
-      AttributeDefinitions:
-        - AttributeName: pk
-          AttributeType: S
-        - AttributeName: sk
-          AttributeType: S
       KeySchema:
-        - AttributeName: pk
+        - AttributeName: PK
           KeyType: HASH
-        - AttributeName: sk
+        - AttributeName: SK
           KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: LSI1
+          AttributeType: N
       BillingMode: PAY_PER_REQUEST
-
+      LocalSecondaryIndexes:
+        - IndexName: LSI1
+          KeySchema:
+            - AttributeName: PK
+              KeyType: HASH
+            - AttributeName: LSI1
+              KeyType: RANGE
+          Projection: 
+            ProjectionType: ALL
+            
   ApiGateway:
     Type: AWS::Serverless::Api
     Properties:
@@ -51,6 +62,9 @@ Resources:
             Path: /nodes
             Method: get
             RestApiId: !Ref ApiGateway
+      Policies: 
+        - DynamoDBReadPolicy:
+            TableName: !Ref Table
 
   SchedulerFunction:
     Type: AWS::Serverless::Function 
