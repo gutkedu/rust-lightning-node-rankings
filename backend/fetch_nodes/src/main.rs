@@ -2,6 +2,7 @@ use lambda_runtime::{run, service_fn, Error, LambdaEvent};
 use serde::{Deserialize, Serialize};
 
 use common::dynamo::{find_many_nodes, new_dynamo_client};
+use common::tracing::init_tracing;
 
 #[derive(Deserialize)]
 struct Request {}
@@ -15,11 +16,13 @@ struct Response {
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    common::init_tracing();
-    run(service_fn(function_handler)).await
+    init_tracing();
+    run(service_fn(fetch_nodes_handler)).await
 }
 
-async fn function_handler(_event: LambdaEvent<Request>) -> Result<Response, Error> {
+// Handler function that is activated by a ApiGatewayProxyRequest
+async fn fetch_nodes_handler(_event: LambdaEvent<Request>) -> Result<Response, Error> {
+    // Initialize the DynamoDB client
     let client = new_dynamo_client().await;
     const TABLE_NAME: &str = "NodesRankingTable";
 

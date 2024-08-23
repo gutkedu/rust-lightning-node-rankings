@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+/// A struct representing a node in the dynamo database.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Node {
     pub pk: String,
@@ -13,6 +14,7 @@ pub struct Node {
     pub updated_at: u64,
 }
 
+/// A struct representing a new node to be created in the dynamo database.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NewNodeDTO {
     pub channels: u64,

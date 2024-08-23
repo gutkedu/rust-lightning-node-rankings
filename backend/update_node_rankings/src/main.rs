@@ -2,10 +2,11 @@ mod mempool_api;
 mod utils;
 
 use lambda_runtime::{run, service_fn, tracing, Error, LambdaEvent};
+use serde::Deserialize;
 
 use common::dtos::NewNodeDTO;
 use common::dynamo::{create_node, new_dynamo_client};
-use serde::Deserialize;
+use common::tracing::init_tracing;
 
 use crate::utils::{convert_satoshi_to_btc, convert_unix_to_iso};
 
@@ -14,7 +15,7 @@ struct Request {}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    common::init_tracing();
+    init_tracing();
     run(service_fn(function_handler)).await
 }
 
@@ -33,6 +34,7 @@ async fn function_handler(_event: LambdaEvent<Request>) -> Result<(), Error> {
     let client = new_dynamo_client().await;
     const TABLE_NAME: &str = "NodesRankingTable";
 
+    // Insert the data into the DynamoDB table
     for node in node_rankings {
         let first_seen_iso = convert_unix_to_iso(node.firstSeen);
 

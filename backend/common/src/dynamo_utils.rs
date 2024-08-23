@@ -1,6 +1,9 @@
 use aws_sdk_dynamodb::types::AttributeValue;
 use serde_json::json;
 
+/// Convert an `AttributeValue` to a `serde_json::Value`.
+/// - The function returns a `serde_json::Value` that represents the `AttributeValue`.
+/// - The `AttributeValue` can be of type `S`, `N`, `B`, `Bool`, `Null`, `M`, or `L`.
 pub fn attribute_value_to_json(value: &AttributeValue) -> serde_json::Value {
     match value {
         AttributeValue::S(s) => json!(s),

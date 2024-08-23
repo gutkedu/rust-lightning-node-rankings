@@ -5,12 +5,19 @@ use serde_json::{json, Map, Value};
 
 use crate::{dtos::NewNodeDTO, dynamo_utils::attribute_value_to_json};
 
+/// Create a new dynamo client.
+/// - The function returns a `Client` struct that can be used to interact with the dynamo database.
+/// - The client is created using the lambda global environment variables.
 pub async fn new_dynamo_client() -> Client {
     let shared_config = aws_config::load_from_env().await;
     let client = Client::new(&shared_config);
     client
 }
 
+/// Create a new node in the dynamo table.
+/// - The `table_name` is the name of the table in the dynamo database.
+/// - The `new_node` is a struct containing the data of the new node.
+/// - The function returns a `Result` with a dynamo db error if any.
 pub async fn create_node(
     client: &Client,
     table_name: &str,
@@ -64,6 +71,19 @@ pub async fn create_node(
     Ok(())
 }
 
+/// Fetch the data from the dynamo table,
+/// the response is a JSON string containing an array of nodes with the following format:
+/// ```json
+/// [
+///     {
+///         "public_key": "03c",
+///         "alias": "Alice",
+///         "capacity": "0.1",
+///         "first_seen": "2021-01-01T00:00:00Z"
+///     },
+///     ...
+/// ]
+/// ```
 pub async fn find_many_nodes(client: &Client, table_name: &str) -> Result<String, Error> {
     let query = client
         .query()
@@ -115,9 +135,7 @@ pub async fn find_many_nodes(client: &Client, table_name: &str) -> Result<String
         })
         .collect();
 
-    // Serialize to JSON string
     let json = json!(items).to_string();
 
-    // Return the JSON string
     Ok(json)
 }

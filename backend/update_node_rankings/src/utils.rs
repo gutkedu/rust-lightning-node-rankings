@@ -1,7 +1,7 @@
 use chrono::{SecondsFormat, TimeZone, Utc};
 
+/// Convert a Unix timestamp to an ISO 8601 formatted string without subsecond precision.
 pub fn convert_unix_to_iso(unix_timestamp: u64) -> String {
-    // Define the valid range for Unix timestamps
     const MIN_TIMESTAMP: i64 = 0; // 1970-01-01T00:00:00Z
     const MAX_TIMESTAMP: i64 = 253402300799; // 9999-12-31T23:59:59Z
 
@@ -18,6 +18,7 @@ pub fn convert_unix_to_iso(unix_timestamp: u64) -> String {
     }
 }
 
+/// Convert a Satoshi value to a Bitcoin value.
 pub fn convert_satoshi_to_btc(satoshi: u64) -> f64 {
     satoshi as f64 / 100_000_000.0
 }
