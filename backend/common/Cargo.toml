@@ -1,0 +1,15 @@
+[package]
+name = "common"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["json"] }
+aws-config = { version = "1.5.5", features = ["behavior-version-latest"] }
+aws-sdk-dynamodb = "1.42.0"
+async-trait = "0.1.51"
+serde_json = "1.0.70"
+serde = { version = "1.0.130", features = ["derive"] }

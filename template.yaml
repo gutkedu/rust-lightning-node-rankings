@@ -8,7 +8,7 @@ Description: >
 Globals:
   Function:
     Timeout: 3
-    MemorySize: 512
+    MemorySize: 256
     Runtime: provided.al2023
 
 Resources:
@@ -49,10 +49,8 @@ Resources:
 
   FetchNodesFunction:
     Type: AWS::Serverless::Function 
-    Metadata:
-      EntryPoint: fetch_nodes
-      BuildMethod: rust-cargolambda 
     Properties:  
+      FunctionName: FetchNodesFunction
       Handler: bootstrap
       CodeUri: backend/fetch_nodes
       Events:
@@ -65,14 +63,15 @@ Resources:
       Policies: 
         - DynamoDBReadPolicy:
             TableName: !Ref Table
-
-  SchedulerFunction:
-    Type: AWS::Serverless::Function 
     Metadata:
       BuildMethod: rust-cargolambda 
+
+  UpdateNodeRankingsFunction:
+    Type: AWS::Serverless::Function 
     Properties:
+      FunctionName: UpdateNodeRankingsFunction
       Handler: bootstrap   
-      CodeUri: backend/scheduler
+      CodeUri: backend/update_node_rankings
       Events:
         ScheduledEvent:
             Type: Schedule
@@ -81,6 +80,8 @@ Resources:
       Policies: 
         - DynamoDBWritePolicy:
             TableName: !Ref Table
+    Metadata:
+      BuildMethod: rust-cargolambda 
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function

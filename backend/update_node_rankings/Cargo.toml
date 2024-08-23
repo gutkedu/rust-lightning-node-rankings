@@ -1,5 +1,5 @@
 [package]
-name = "fetch_nodes"
+name = "update_node_rankings"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,5 +8,8 @@ edition = "2021"
 [dependencies]
 common = { path = "../common" }
 lambda_runtime = "0.13.0"
+chrono = "0.4.38"
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1", features = ["macros"] }
+serde_json = "1.0"
+ureq = "2.0"
+tokio = { version = "1", features = ["full"] }
